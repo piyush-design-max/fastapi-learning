@@ -12,6 +12,8 @@ app.include_router(auth.router)
 
 
 
+
+
 # the get method fetches data from the api server not the html webpage
 @app.get("/")
 def root():

@@ -1,5 +1,5 @@
 from fastapi import  Response, status, HTTPException, Depends, APIRouter
-from .. import models, schemas
+from .. import models, schemas , oauth2
 from ..database import  get_db
 from sqlalchemy.orm import Session
 
@@ -21,13 +21,13 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)):
     # cursor.execute("""insert into posts (title,content,published) values (%s,%s,%s) returning*""",
     #                (new_post.title, new_post.content, new_post.publish))
     # # we use %s to prevent sql injection ie someone can pass a sql code into it and which can manipulate out database so % kinda sanitizes it.
     # postz = cursor.fetchone()
     # conn.commit()
-
+    print(current_user)
     postz = models.Post(title=new_post.title, content=new_post.content, published=new_post.published)
     db.add(postz)
     db.commit()
@@ -69,7 +69,7 @@ def get_post(id: int, response: Response,db: Session = Depends(get_db)):
 
 # title str, content str, category, bool published
 @router.delete("/post/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
+def delete_post(id: int,current_user : int = Depends(oauth2.get_current_user)):
     # # deleting post
     # # finding the data of that id
     # # mypost.pop(index)
