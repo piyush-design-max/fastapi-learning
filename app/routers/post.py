@@ -1,9 +1,12 @@
-from fastapi import  Response, status, HTTPException, Depends, APIRouter
-from .. import models, schemas , oauth2
-from ..database import  get_db
+from typing import Optional
+
+from fastapi import Response, status, HTTPException, Depends, APIRouter
+from .. import models, schemas, oauth2
+from ..database import get_db
 from sqlalchemy.orm import Session
 
 router = APIRouter()
+
 
 @router.get("/sqlalchemy")
 def test_post(db: Session = Depends(get_db)):
@@ -13,15 +16,18 @@ def test_post(db: Session = Depends(get_db)):
 
 
 @router.get("/posts")
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), Limit: int = 10,
+              skip: int = 0, search: Optional[str] = ""):
     # cursor.execute("""select*from posts""")
     # posts = cursor.fetchall()
-    posts = db.query(models.Post).all()
+    print(search)
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(Limit).offset(skip).all()
     return {"data": posts}
 
 
 @router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)):
+def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db),
+                 current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute("""insert into posts (title,content,published) values (%s,%s,%s) returning*""",
     #                (new_post.title, new_post.content, new_post.publish))
     # # we use %s to prevent sql injection ie someone can pass a sql code into it and which can manipulate out database so % kinda sanitizes it.
@@ -55,10 +61,10 @@ def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), cu
 
 
 @router.get("/posts/{id}", response_model=schemas.Post)
-def get_post(id: int, response: Response,db: Session = Depends(get_db)):
+def get_post(id: int, response: Response, db: Session = Depends(get_db)):
     # cursor.execute("""select*from posts where id = %s""", (str)(id))
     # testpost = cursor.fetchone()
-    post = db.query(models.Post).filter(models.Post.id==id).first()
+    post = db.query(models.Post).filter(models.Post.id == id).first()
     # post = find_post(id)
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with {id} not found")
@@ -69,7 +75,7 @@ def get_post(id: int, response: Response,db: Session = Depends(get_db)):
 
 # title str, content str, category, bool published
 @router.delete("/post/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int,current_user : int = Depends(oauth2.get_current_user)):
+def delete_post(id: int, current_user: int = Depends(oauth2.get_current_user)):
     # # deleting post
     # # finding the data of that id
     # # mypost.pop(index)
@@ -79,7 +85,6 @@ def delete_post(id: int,current_user : int = Depends(oauth2.get_current_user)):
     if delete_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with {id} does not exist")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
 
 # @router.put("/posts/{id}", response_model=schemas.Post)
 # def update_post(id: int, post: schemas.Post):

@@ -11,7 +11,7 @@ class Post(Base):
     published = Column(Boolean, server_default='True',nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False,server_default=text('now()'))
 
-#wont help you modify tables if the table is already there it wont touch it, sqlalchemey is not made
+#won't help you modify tables if the table is already there it won't touch it, sqlalchemey is not made
 #for making changes in the database
 
 class User(Base):
